@@ -164,6 +164,8 @@ fcntl26 fcntl26
 fcntl29 fcntl29
 fcntl30 fcntl30
 fcntl31 fcntl31
+fcntl32 fcntl32
+fcntl33 fcntl33
 
 fdatasync01 fdatasync01
 fdatasync02 fdatasync02
@@ -496,6 +498,8 @@ pread01 pread01
 pread02 pread02
 pread03 pread03
 
+preadv01 preadv01
+
 profil01 profil01
 
 pselect01 pselect01
@@ -512,6 +516,8 @@ pwrite04 pwrite04
 pwrite01_64 pwrite01_64
 pwrite02_64 pwrite02_64
 pwrite04_64 pwrite04_64
+
+pwritev01 pwritev01
 
 read01 read01
 read02 read02
@@ -742,6 +748,7 @@ signal02 signal02
 signal03 signal03
 signal04 signal04
 signal05 signal05
+signal06 signal06
 
 sigpending02 sigpending02
 

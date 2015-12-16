@@ -258,6 +258,10 @@ fcntl30 fcntl30
 fcntl30_64 fcntl30_64
 fcntl31 fcntl31
 fcntl31_64 fcntl31_64
+fcntl32 fcntl32
+fcntl32_64 fcntl32_64
+fcntl33 fcntl33
+fcntl33_64 fcntl33_64
 
 fdatasync01 fdatasync01
 fdatasync02 fdatasync02
@@ -449,6 +453,7 @@ inotify02 inotify02
 inotify03 inotify03
 inotify04 inotify04
 inotify05 inotify05
+inotify06 inotify06
 
 fanotify01 fanotify01
 fanotify02 fanotify02
@@ -470,6 +475,9 @@ io_setup01 io_setup01
 io_submit01 io_submit01
 
 keyctl01 keyctl01
+
+kcmp01 kcmp01
+kcmp02 kcmp02
 
 kill01 kill01
 kill02 kill02
@@ -771,6 +779,9 @@ pread02_64 pread02_64
 pread03 pread03
 pread03_64 pread03_64
 
+preadv01 preadv01
+preadv01_64 preadv01_64
+
 profil01 profil01
 
 process_vm_readv01 process_vm01 -r
@@ -801,6 +812,9 @@ pwrite04 pwrite04
 pwrite01_64 pwrite01_64
 pwrite02_64 pwrite02_64
 pwrite04_64 pwrite04_64
+
+pwritev01 pwritev01
+pwritev01_64 pwritev01_64
 
 quotactl01 quotactl01
 quotactl02 quotactl02
@@ -862,6 +876,9 @@ rename14 rename14
 #renameat test cases
 renameat01 renameat01
 
+renameat201 renameat201
+renameat202 renameat202 -i 10
+
 rmdir01 rmdir01
 rmdir02 rmdir02
 rmdir03 rmdir03
@@ -910,6 +927,10 @@ sched_yield01 sched_yield01
 
 sched_setaffinity01 sched_setaffinity01
 sched_getaffinity01 sched_getaffinity01
+
+sched_setattr01 sched_setattr01
+sched_getattr01 sched_getattr01
+sched_getattr02 sched_getattr02
 
 select01 select01
 select02 select02
@@ -1130,6 +1151,7 @@ signal02 signal02
 signal03 signal03
 signal04 signal04
 signal05 signal05
+signal06 signal06
 
 signalfd01 signalfd01
 
@@ -1317,6 +1339,8 @@ umount02 umount02
 umount03 umount03
 
 umount2_01 umount2_01
+umount2_02 umount2_02
+umount2_03 umount2_03
 
 ustat01 ustat01
 ustat02 ustat02

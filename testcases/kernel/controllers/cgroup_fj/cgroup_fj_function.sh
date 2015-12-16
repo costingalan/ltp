@@ -32,14 +32,14 @@ remove_operation=$7
 notify_on_release=$8
 release_agent_echo=$9
 
-subsystem_str="";
 remount_use_str="";
 noprefix_use_str="";
 release_agent_para_str="";
 notify_on_release_str="";
 release_agent_str="";
+mounted=1;
 
-expectted=1;
+expected=1;
 
 # Create some processes and move them to cgroups
 pid=0;
@@ -55,24 +55,27 @@ usage()
 	echo "                          -subgroup_exist -attach_operation -remove_operation"
 	echo "                          -notify_on_release -release_agent_echo"
 	echo "    subsystem's usable number"
-	echo "      1: debug"
-	echo "      2: cpuset"
-	echo "      3: ns"
-	echo "      4: cpu"
-	echo "      5: cpuacct"
-	echo "      6: memory"
-	echo "      7: all"
-	echo "      8: (none)"
-	echo "      9: debug,debug"
-	echo "      10: (nonexistent subsystem), e.g. abc"
-	echo "      11: freezer"
-	echo "      12: devices"
+	echo "      debug"
+	echo "      cpuset"
+	echo "      ns"
+	echo "      cpu"
+	echo "      cpuacct"
+	echo "      memory"
+	echo "      debug,debug: debug,debug"
+	echo "      nonexistent: (nonexistent subsystem), e.g. abc"
+	echo "      freezer"
+	echo "      devices"
+	echo "      blkio"
+	echo "      hugetlb"
+	echo "      net_cls"
+	echo "      net_prio"
+	echo "      pids"
 	echo "    remount_use's usable number"
-	echo "      1: do not use remount in "-o"'s parameter"
-	echo "      2: use it"
+	echo "      yes: do not use remount in "-o"'s parameter"
+	echo "      no: use it"
 	echo "    noprefix_use's usable number"
-	echo "      1: do not use noprefix in "-o"'s parameter"
-	echo "      2: use it. only cpuset available"
+	echo "      yes: do not use noprefix in "-o"'s parameter"
+	echo "      no: use it. only cpuset available"
 	echo "    release_agent_para's usable number"
 	echo "      1: don't use release_agent_para= in "-o"'s parameter"
 	echo "      2: empty after "=""
@@ -83,8 +86,8 @@ usage()
 	echo "      7: nonexistent command"
 	echo "      8: no-permission command"
 	echo "    subgroup_exist's usable number"
-	echo "      1: subgroup will been created"
-	echo "      2: subgroup will not been created"
+	echo "      yes: subgroup will been created"
+	echo "      no: subgroup will not been created"
 	echo "    attach_operation's usable number"
 	echo "      1: attach nothing"
 	echo "      2: attach one process by echo"
@@ -114,30 +117,24 @@ usage()
 	echo "      5: command in other directory"
 	echo "      6: nonexistent command"
 	echo "      7: no-permission command"
-	echo "example: ./cgroup_fj_function.sh 1 1 1 1 1 1 1 1 1"
+	echo "example: ./cgroup_fj_function.sh debug yes yes 1 yes 1 1 1 1"
 	echo "  will use "debug" to test, will not use option "remount","noprefix","release_agent""
 	echo "  in in "-o"'s parameter, will create some subgroup, will not attach/remove any process"
 	echo "  will echo 0 to notify_on_release and will not echo anything to release_agent"
 }
 
 export TESTROOT=`pwd`
-if [ "$LOGFILE" = "" ]; then
-	LOGFILE="/dev/stdout"
-fi
+
 export TMPFILE=$TESTROOT/tmp_tasks
 
 . $TESTROOT/cgroup_fj_utility.sh
 
 ##########################  main   #######################
 if [ "$#" -ne "9" ]; then
-	echo "ERROR: Wrong inputed parameter..Exiting test" >> $LOGFILE;
+	echo "ERROR: Wrong input parameters... Exiting test";
 	usage;
 	exit -1;
 fi
-
-echo "-------------------------------------------------------------------------" >> $LOGFILE
-echo "case no : $CASENO1" >> $LOGFILE
-echo `date` >> $LOGFILE
 
 check_para;
 if [ $? -ne 0 ]; then
@@ -146,10 +143,6 @@ if [ $? -ne 0 ]; then
 fi
 setup;
 
-echo "INFO: now we begin to test no $CASENO1 ..." >> $LOGFILE
-
-mount_cgroup;
-
 $TESTROOT/cgroup_fj_proc &
 pid=$!
 
@@ -157,15 +150,15 @@ mkdir_subgroup;
 
 # cpuset.cpus and cpuset.mems should be specified with suitable value
 # before attaching operation if subsystem is cpuset
-if [ $subsystem -eq 2 ] || [ $subsystem -eq 7 ] || [ $subsystem -eq 8 ] ; then
+if [ "$subsystem" == "cpuset" ]; then
 	exist=`grep -w cpuset /proc/cgroups | cut -f1`;
 	if [ "$exist" != "" ]; then
-		if [ $noprefix_use -eq 2 ]; then
-			do_echo 1 1 `cat /dev/cgroup/cpus` /dev/cgroup/subgroup_1/cpus;
-			do_echo 1 1 `cat /dev/cgroup/mems` /dev/cgroup/subgroup_1/mems;
+		if [ "$noprefix_use" == "no" ]; then
+			do_echo 1 1 `cat $mount_point/cpus` $mount_point/ltp_subgroup_1/cpus;
+			do_echo 1 1 `cat $mount_point/mems` $mount_point/ltp_subgroup_1/mems;
 		else
-			do_echo 1 1 `cat /dev/cgroup/cpuset.cpus` /dev/cgroup/subgroup_1/cpuset.cpus;
-			do_echo 1 1 `cat /dev/cgroup/cpuset.mems` /dev/cgroup/subgroup_1/cpuset.mems;
+			do_echo 1 1 `cat $mount_point/cpuset.cpus` $mount_point/ltp_subgroup_1/cpuset.cpus;
+			do_echo 1 1 `cat $mount_point/cpuset.mems` $mount_point/ltp_subgroup_1/cpuset.mems;
 		fi
 	fi
 fi
@@ -175,12 +168,12 @@ case $attach_operation in
 "1" )
 	;;
 "2" )
-	do_echo 1 1 $pid /dev/cgroup/subgroup_1/tasks;
+	do_echo 1 1 $pid $mount_point/ltp_subgroup_1/tasks;
 	;;
 "3" )
 	$TESTROOT/cgroup_fj_proc &
 	pid2=$!
-	cat /dev/cgroup/tasks > $TMPFILE
+	cat $mount_point/tasks > $TMPFILE
 	nlines=`cat $TMPFILE | wc -l`
 	for i in `seq 1 $nlines`
 	do
@@ -199,12 +192,12 @@ case $attach_operation in
 					continue
 				fi
 			fi
-			do_echo 1 1 "$cur_pid" /dev/cgroup/subgroup_1/tasks
+			do_echo 1 1 "$cur_pid" $mount_point/ltp_subgroup_1/tasks
 		fi
 	done
 	;;
 "4" )
-	do_echo 1 1 $pid /dev/cgroup/subgroup_1/tasks;
+	do_echo 1 1 $pid $mount_point/ltp_subgroup_1/tasks;
 	sleep 1
 	do_kill 1 1 10 $pid
 	;;
@@ -213,28 +206,28 @@ esac
 # echo notify_on_release that analysed from parameter
 case $notify_on_release in
 "1"|"2"|"3")
-	expectted=1
+	expected=1
 	;;
 *)
-	expectted=0
+	expected=0
 	;;
 esac
 
 #if [ $notify_on_release -ne 0 ] && [ $notify_on_release -ne 1 ] && [ $notify_on_release -ne 2 ];then
-#	expectted=0
+#	expected=0
 #fi
-do_echo 1 $expectted $notify_on_release_str /dev/cgroup/subgroup_1/notify_on_release;
+do_echo 1 $expected $notify_on_release_str $mount_point/ltp_subgroup_1/notify_on_release;
 
 # echo release_agent that analysed from parameter
 if [ $release_agent_echo -ne 1 ]; then
-	do_echo 1 1 $release_agent_str /dev/cgroup/release_agent;
+	do_echo 1 1 $release_agent_str $mount_point/release_agent;
 fi
 
 sleep 1
 
 # pid could not be echoed from subgroup if subsystem is ( or include ) ns,
 # so we kill them here
-if [ $subsystem -eq 3 ] || [ $subsystem -eq 7 ] || [ $subsystem -eq 8 ] ; then
+if [ "$subsystem" == "ns" ]; then
 	do_kill 1 1 9 $pid
 	do_kill 1 1 9 $pid2
 # removing operation
@@ -243,20 +236,20 @@ else
 	"1" )
 		;;
 	"2" )
-		do_echo 1 1 $pid /dev/cgroup/tasks
+		do_echo 1 1 $pid $mount_point/tasks
 		if [ $pid2 -ne 0 ]  ; then
-			do_echo 1 1 $pid2 /dev/cgroup/tasks
+			do_echo 1 1 $pid2 $mount_point/tasks
 		fi
 		;;
 	"3" )
-		cat /dev/cgroup/subgroup_1/tasks > $TMPFILE
+		cat $mount_point/ltp_subgroup_1/tasks > $TMPFILE
 		nlines=`cat $TMPFILE | wc -l`
 		if [ $nlines -ne 0 ]; then
 			for i in `seq 1 $nlines`
 			do
 				cur_pid=`sed -n "$i""p" $TMPFILE`
 				if [ -e /proc/$cur_pid/ ];then
-					do_echo 1 1 "$cur_pid" /dev/cgroup/tasks
+					do_echo 1 1 "$cur_pid" $mount_point/tasks
 				fi
 			done
 		fi
@@ -273,7 +266,7 @@ fi
 
 sleep 1
 
-do_rmdir 0 1 /dev/cgroup/subgroup_*
+do_rmdir 0 1 $mount_point/ltp_subgroup_*
 
 cleanup;
 do_kill 1 1 9 $pid

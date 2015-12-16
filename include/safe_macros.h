@@ -21,6 +21,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
 #include <libgen.h>
 #include <stdarg.h>
@@ -28,6 +29,7 @@
 #include <dirent.h>
 
 #include "safe_stdio.h"
+#include "safe_net.h"
 
 char*	safe_basename(const char *file, const int lineno,
 	    void (*cleanup_fn)(void), char *path);
@@ -110,7 +112,7 @@ ssize_t	safe_read(const char *file, const int lineno,
 
 ssize_t safe_pread(const char *file, const int lineno, void (*cleanup_fn)(void),
 	    char len_strict, int fildes, void *buf, size_t nbyte, off_t offset);
-#define SAFE_PREAD(cleanup_fn, len_strict, fildes, buf, nbyte)   \
+#define SAFE_PREAD(cleanup_fn, len_strict, fildes, buf, nbyte, offset)   \
 	safe_pread(__FILE__, __LINE__, cleanup_fn, (len_strict), (fildes), \
 	    (buf), (nbyte), (offset))
 
@@ -432,6 +434,14 @@ struct dirent *safe_readdir(const char *file, const int lineno, void (cleanup_fn
                             DIR *dirp);
 #define SAFE_READDIR(cleanup_fn, dirp) \
 	safe_readdir(__FILE__, __LINE__, (cleanup_fn), (dirp))
+
+
+#define SAFE_IOCTL(cleanup_fn, fd, request, ...)             \
+	({int ret = ioctl(fd, request, __VA_ARGS__);         \
+	  ret < 0 ?                                          \
+	   tst_brkm(TBROK | TERRNO, cleanup_fn,              \
+	            "ioctl(%i,%s,...) failed", fd, #request) \
+	 : ret;})
 
 #endif /* __SAFE_MACROS_H__ */
 #endif /* __TEST_H__ */
